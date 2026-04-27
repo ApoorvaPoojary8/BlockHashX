@@ -1,42 +1,317 @@
 <!DOCTYPE html>
-<html>
+
+<html lang="en">
 <head>
-    <title>BlockHashX</title>
-    <link rel="stylesheet" href="../static/css/styles.css">
+    <style>
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.animate-fadeIn {
+    animation: fadeIn 0.4s ease-in-out;
+}
+</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BlockHashX</title>
+
+
+
+<script src="https://cdn.tailwindcss.com"></script>
+
 </head>
-<body>
 
-<div class="container">
+<body class="bg-[#0f172a] text-gray-300">
 
-    <h1>🚀 BlockHashX</h1>
 
-    <div class="card">
-        <h2>Add Block</h2>
-        <input type="text" id="blockData" placeholder="Enter block data">
-        <button onclick="createBlock()">Add Block</button>
+
+<div class="fixed inset-0 -z-10 overflow-hidden">
+    <div class="absolute w-[400px] h-[400px] bg-blue-500 opacity-20 blur-3xl rounded-full top-[-100px] left-[-100px] animate-pulse"></div>
+    <div class="absolute w-[400px] h-[400px] bg-purple-500 opacity-20 blur-3xl rounded-full bottom-[-100px] right-[-100px] animate-pulse"></div>
+</div>
+
+<!-- 🔝 Header -->
+
+<header class="sticky top-0 bg-white/5 backdrop-blur-lg border-b border-white/10">
+    <div class="max-w-6xl mx-auto px-6 py-4 text-center">
+        <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+            🚀 BlockHashX
+        </h1>
+        <p class="text-gray-400 text-sm">Blockchain Playground</p>
     </div>
+</header>
 
-    <div class="card">
-        <h2>Hash Generator</h2>
-        <input type="text" id="hashData" placeholder="Enter text to hash">
-        <button onclick="hashData()">Generate Hash</button>
-        <p id="hashResult"></p>
-    </div>
 
-    <div class="card">
-        <h2>Blockchain</h2>
-        <button onclick="loadChain()">Load Chain</button>
-        <pre id="chainOutput"></pre>
-    </div>
 
-    <div class="card">
-        <h2>Validation</h2>
-        <button onclick="validateChain()">Check Validity</button>
-        <p id="validationResult"></p>
-    </div>
+<div class="max-w-6xl mx-auto px-6 py-10">
+
+
+
+<div class="grid md:grid-cols-2 gap-6">
+
+
+
+<div class="bg-white/5 backdrop-blur-xl rounded-xl p-6 shadow-xl hover:scale-105 transition">
+    <h2 class="text-white text-xl font-semibold mb-2">Add Block</h2>
+    <p class="text-gray-400 text-sm mb-4">Add new data to blockchain</p>
+
+<input id="blockData" class="w-full p-3 rounded-lg bg-[#020617] border border-white/10 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Enter block data">
+
+<button onclick="createBlock(this)" class="mt-4 w-full py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500">
+    Add Block
+</button>
 
 </div>
 
-<script src="../static/js/app.js"></script>
+
+<div class="bg-white/5 backdrop-blur-xl rounded-xl p-6 shadow-xl hover:scale-105 transition">
+    <h2 class="text-white text-xl font-semibold mb-2">Hash Generator</h2>
+    <p class="text-gray-400 text-sm mb-4">Generate SHA-256 hash</p>
+
+<input id="hashData" class="w-full p-3 rounded-lg bg-[#020617] border border-white/10 focus:ring-2 focus:ring-purple-500 outline-none" placeholder="Enter text">
+
+<button onclick="hashData(this)" class="mt-4 w-full py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500">
+    Generate Hash
+</button>
+
+<div id="hashResult" class="mt-4 p-3 bg-black rounded text-xs break-all"></div>
+
+<button onclick="copyHash()" class="mt-2 text-sm text-blue-400 hover:underline">Copy</button>
+
+</div>
+
+
+<div class="bg-white/5 backdrop-blur-xl rounded-xl p-6 shadow-xl hover:scale-105 transition md:col-span-2">
+    <h2 class="text-white text-xl font-semibold mb-2">Blockchain</h2>
+
+<button onclick="loadChain(this)" class="mb-4 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500">
+    Load Chain
+</button>
+<div id="chainOutput" 
+class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+</div>
+
+</div>
+
+
+
+<div class="bg-white/5 backdrop-blur-xl rounded-xl p-6 shadow-xl hover:scale-105 transition md:col-span-2">
+    <h2 class="text-white text-xl font-semibold mb-2">Validation</h2>
+
+<button onclick="validateChain(this)" class="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500">
+    Check Validity
+</button>
+
+<div id="validationResult" class="mt-4"></div>
+
+</div>
+
+</div>
+</div>
+
+
+<div id="toast" class="fixed top-5 right-5 bg-black px-4 py-2 rounded shadow hidden"></div>
+
+
+<script>
+const API = "http://127.0.0.1:5000/api";
+
+
+function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.innerText = msg;
+    t.classList.remove("hidden");
+    setTimeout(() => t.classList.add("hidden"), 2000);
+}
+
+
+function setLoading(btn, state) {
+    if (!btn.dataset.original) {
+        btn.dataset.original = btn.innerHTML;
+    }
+
+    btn.disabled = state;
+
+    btn.innerHTML = state
+        ? `
+        <span class="flex items-center justify-center gap-2">
+            <span>Adding...</span>
+            <span class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+        </span>`
+        : btn.dataset.original;
+
+    btn.classList.toggle("opacity-60", state);
+}
+
+async function createBlock(btn) {
+    setLoading(btn, true);
+
+    const input = document.getElementById("blockData");
+    const data = input.value;
+
+    await fetch(`${API}/block`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({data})
+    });
+
+    input.value = "";
+
+    setLoading(btn, false);
+    showToast("Block Added Successfully ✅");
+
+    loadChain(); // 🔥 auto refresh
+}
+
+/* 🔐 Hash */
+async function hashData(btn) {
+    setLoading(btn, true);
+
+    const data = document.getElementById("hashData").value;
+
+    const res = await fetch(`${API}/hash`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({data})
+    });
+
+    const result = await res.json();
+
+    document.getElementById("hashResult").innerText = result.hash;
+
+    setLoading(btn, false);
+}
+
+/* 📋 Copy */
+function copyHash() {
+    const text = document.getElementById("hashResult").innerText;
+    navigator.clipboard.writeText(text);
+    showToast("Copied!");
+}
+
+
+let chainVisible = false;
+let isLoadingChain = false;
+
+async function loadChain(btn = null) {
+    const container = document.getElementById("chainOutput");
+
+    // 🚫 Prevent spam clicking
+    if (isLoadingChain) return;
+
+    // 🔁 Toggle OFF
+    if (chainVisible) {
+        container.classList.add("hidden");
+        if (btn) btn.innerText = "Load Chain";
+        chainVisible = false;
+        return;
+    }
+
+    isLoadingChain = true;
+
+    // 👇 Show container FIRST
+    container.classList.remove("hidden");
+
+    if (btn) setLoading(btn, true);
+
+    const start = Date.now();
+
+    const res = await fetch(`${API}/chain`);
+    const data = await res.json();
+
+    container.innerHTML = "";
+
+    data.forEach((block, i) => {
+
+        const blockEl = document.createElement("div");
+        blockEl.className = `
+            w-80 p-4 rounded-xl bg-white/5 backdrop-blur-lg border border-white/10
+            hover:scale-105 hover:shadow-blue-500/20 hover:shadow-lg
+            transition duration-300 ease-in-out animate-fadeIn
+        `;
+
+        blockEl.innerHTML = `
+            <p class="text-sm text-gray-400">#${block.index}</p>
+            <p class="text-xs text-gray-500">${block.timestamp}</p>
+            <p class="mt-2 text-white font-medium">${block.data}</p>
+
+            <p class="text-xs mt-2 text-blue-400 break-all">
+                ${block.hash.slice(0, 20)}...
+            </p>
+
+            <p class="text-xs text-purple-400 break-all">
+                ${block.previous_hash.slice(0, 20)}...
+            </p>
+        `;
+
+        container.appendChild(blockEl);
+
+        blockEl.className = `
+    relative w-full p-4 rounded-xl bg-white/5 backdrop-blur-lg border border-white/10
+    hover:scale-105 hover:shadow-blue-500/20 hover:shadow-lg
+    transition duration-300 ease-in-out animate-fadeIn
+`;
+
+blockEl.innerHTML = `
+    <p class="text-sm text-gray-400">#${block.index}</p>
+    <p class="text-xs text-gray-500">${block.timestamp}</p>
+    <p class="mt-2 text-white font-medium">${block.data}</p>
+
+    <p class="text-xs mt-2 text-blue-400 break-all">
+        ${block.hash.slice(0, 20)}...
+    </p>
+
+    <p class="text-xs text-purple-400 break-all">
+        ${block.previous_hash.slice(0, 20)}...
+    </p>
+
+    ${i < data.length - 1 ? `
+        <div class="absolute right-[-18px] top-1/2 -translate-y-1/2 text-blue-400 text-xl">
+            →
+        </div>
+    ` : ""}
+`;
+    });
+
+    // ⏳ FORCE minimum visible time (THIS is the key fix)
+    const elapsed = Date.now() - start;
+    const minTime = 800;
+
+    if (elapsed < minTime) {
+        await new Promise(r => setTimeout(r, minTime - elapsed));
+    }
+
+    if (btn) {
+        setLoading(btn, false);
+        btn.innerText = "Hide Chain";
+    }
+
+    chainVisible = true;
+    isLoadingChain = false;
+}
+
+/* ✅ Validate */
+async function validateChain(btn) {
+    setLoading(btn, true);
+
+    const res = await fetch(`${API}/validate`);
+    const data = await res.json();
+
+    document.getElementById("validationResult").innerHTML =
+        data.valid
+        ? '<span class="bg-green-500 px-3 py-1 rounded">Valid</span>'
+        : '<span class="bg-red-500 px-3 py-1 rounded">Invalid</span>';
+
+    setLoading(btn, false);
+}
+</script>
+
 </body>
 </html>
