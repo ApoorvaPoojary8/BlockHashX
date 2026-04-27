@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BlockHashX</title>
+    <link rel="stylesheet" href="../static/css/styles.css">
+</head>
+<body>
+
+<div class="container">
+
+    <h1>🚀 BlockHashX</h1>
+
+    <div class="card">
+        <h2>Add Block</h2>
+        <input type="text" id="blockData" placeholder="Enter block data">
+        <button onclick="createBlock()">Add Block</button>
+    </div>
+
+    <div class="card">
+        <h2>Hash Generator</h2>
+        <input type="text" id="hashData" placeholder="Enter text to hash">
+        <button onclick="hashData()">Generate Hash</button>
+        <p id="hashResult"></p>
+    </div>
+
+    <div class="card">
+        <h2>Blockchain</h2>
+        <button onclick="loadChain()">Load Chain</button>
+        <pre id="chainOutput"></pre>
+    </div>
+
+    <div class="card">
+        <h2>Validation</h2>
+        <button onclick="validateChain()">Check Validity</button>
+        <p id="validationResult"></p>
+    </div>
+
+</div>
+
+<script src="../static/js/app.js"></script>
+</body>
+</html>
